@@ -3,23 +3,40 @@ import { useRef } from "react";
 import { Todo } from "./hooks/useTodos";
 import axios from "axios";
 
+interface AddTodoContext {
+  previousTodos: Todo[];
+}
 const TodoForm = () => {
   const queryClient = useQueryClient();
   const ref = useRef<HTMLInputElement>(null);
-  const addTodo = useMutation<Todo, Error, Todo>({
+  const addTodo = useMutation<Todo, Error, Todo, AddTodoContext>({
     mutationFn: (todo: Todo) =>
       axios
         .post<Todo>("https://jsonplaceholder.typicode.com/todos", todo)
         .then((res) => res.data),
+
+    onMutate: (newTodo: Todo) => {
+      const previousTodos = queryClient.getQueryData<Todo[]>(["todos"]) || [];
+      queryClient.setQueryData<Todo[]>(["todos"], (todos) => [
+        newTodo,
+        ...(todos || []),
+      ]);
+      if (ref.current) ref.current.value = "";
+
+      return { previousTodos };
+    },
     onSuccess: (savedTodo, newTodo) => {
       //approach 1 for other backends , we can use invalidating cache to update or refetch the new data
       // queryClient.invalidateQueries({ queryKey: ["todos"] });
       //approach 2: for json placeholder , updating the cache
-      queryClient.setQueryData<Todo[]>(["todos"], (todos) => [
-        savedTodo,
-        ...(todos || []),
-      ]);
+      queryClient.setQueryData<Todo[]>(["todos"], (todos) =>
+        todos?.map((todo) => (todo === newTodo ? savedTodo : todo))
+      );
       if (ref.current) ref.current.value = "";
+    },
+    onError: (error, newTodo, context) => {
+      if (!context) return;
+      queryClient.setQueryData<Todo[]>(["todos"], context.previousTodos);
     },
   });
 

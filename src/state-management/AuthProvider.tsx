@@ -8,10 +8,11 @@ interface Props {
 const AuthProvider = ({ children }: Props) => {
   const [user, dispatch] = useReducer(authReducer, "");
 
-  <AuthContext.Provider value={{ user, dispatch }}>
-    {children}
-  </AuthContext.Provider>;
-  return <div>AuthProvider</div>;
+  return (
+    <AuthContext.Provider value={{ user, dispatch }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;

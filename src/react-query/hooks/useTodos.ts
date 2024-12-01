@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { CACHE_KEY_TODOS } from "../constansts";
 import { Todo } from "../services/todoService";
 import todoService from "../services/todoService";
